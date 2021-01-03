@@ -8,14 +8,16 @@ RUN apt-get update && \
 
 FROM debian:10.7-slim AS latex
 
-COPY texlive.profile .
+COPY texlive.profile /
 RUN apt-get update && \
     apt-get install -y curl perl && \
     mkdir install-tl && \
     curl http://dante.ctan.org/tex-archive/systems/texlive/tlnet/install-tl-unx.tar.gz | tar --strip-components 1 -xzC install-tl && \
     /install-tl/install-tl --profile=texlive.profile && \
-    /texlive/texdir/bin/x86_64-linux/tlmgr install chemfig simplekv circuitikz xstring siunitx esint mhchem tikz-cd cancel doublestroke units physics rsfs cjhebrew standalone
+    /texlive/texdir/bin/x86_64-linux/tlmgr install chemfig simplekv circuitikz xstring siunitx esint mhchem tikz-cd cancel doublestroke units physics rsfs cjhebrew standalone esint-type1
 COPY texmf.cnf /texlive/texdir
+COPY preamble.tex /
+RUN /texlive/texdir/bin/x86_64-linux/pdflatex -ini -output-format=pdf "&latex preamble.tex"
 
 FROM debian:10.7-slim AS ghostscript
 
@@ -40,6 +42,7 @@ RUN apt-get update && \
     useradd -M nsjail
 COPY --from=nsjail /app/nsjail /app
 COPY --from=latex /texlive /app/texlive
+COPY --from=latex /preamble.fmt /app
 COPY --from=ghostscript /app/gs /app
 COPY --from=job /app/job /app
 COPY nsjail.cfg run.sh /app/
