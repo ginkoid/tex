@@ -32,9 +32,8 @@ func main() {
 	if err := ioutil.WriteFile("/tmp/job.tex", latexBytes, 0700); err != nil {
 		panic(err)
 	}
-	latexCmd := exec.Command("/texlive/texdir/bin/x86_64-linux/pdflatex", "-interaction=nonstopmode", "-fmt=/preamble", "-output-directory=/tmp", "job.tex")
-	latexOut, _ := latexCmd.CombinedOutput()
-	if _, err := os.Stat("/tmp/job.pdf"); os.IsNotExist(err) {
+	latexCmd := exec.Command("/texlive/texdir/bin/x86_64-linux/pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-fmt=/preamble", "-output-directory=/tmp", "job.tex")
+	if latexOut, err := latexCmd.CombinedOutput(); err != nil {
 		writeCode(responseTexError)
 		os.Stdout.Write(latexOut)
 		return
