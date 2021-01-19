@@ -1,17 +1,16 @@
 package main
 
 import (
-	"os"
-	"os/exec"
+	"encoding/binary"
 	"io"
 	"io/ioutil"
-	"encoding/binary"
+	"os"
+	"os/exec"
 )
 
 const (
 	responsePng = iota
 	responseTexError
-	responseMagickError
 )
 
 func writeCode(code uint32) {
@@ -34,18 +33,17 @@ func main() {
 		panic(err)
 	}
 	latexCmd := exec.Command("/texlive/texdir/bin/x86_64-linux/pdflatex", "-interaction=nonstopmode", "-fmt=/preamble", "-output-directory=/tmp", "job.tex")
-	latexOut, err := latexCmd.CombinedOutput()
-	if err != nil {
+	latexOut, _ := latexCmd.CombinedOutput()
+	if _, err := os.Stat("/tmp/job.pdf"); os.IsNotExist(err) {
 		writeCode(responseTexError)
 		os.Stdout.Write(latexOut)
 		return
 	}
-	gmCmd := exec.Command("/gs", "-q", "-dBATCH", "-dNOPAUSE", "-dSAFER", "-sOutputFile=-", "-dMaxBitmap=10485760", "-dTextAlphaBits=4", "-dGraphicsAlphaBits=4", "-r440", "-sDEVICE=pngalpha", "/tmp/job.pdf")
-	gmOut, err := gmCmd.CombinedOutput()
-	if err != nil {
-		writeCode(responseMagickError)
+	gsCmd := exec.Command("/gs", "-q", "-dBATCH", "-dNOPAUSE", "-dSAFER", "-sOutputFile=-", "-dMaxBitmap=10485760", "-dTextAlphaBits=4", "-dGraphicsAlphaBits=4", "-r440", "-sDEVICE=pngalpha", "/tmp/job.pdf")
+	if gsOut, err := gsCmd.Output(); err != nil {
+		panic(err)
 	} else {
 		writeCode(responsePng)
+		os.Stdout.Write(gsOut)
 	}
-	os.Stdout.Write(gmOut)
 }
