@@ -29,7 +29,7 @@ func main() {
 	if _, err := io.ReadFull(os.Stdin, latexBytes); err != nil {
 		panic(err)
 	}
-	if err := ioutil.WriteFile("/tmp/job.tex", latexBytes, 0700); err != nil {
+	if err := ioutil.WriteFile("/tmp/job.tex", latexBytes, 0400); err != nil {
 		panic(err)
 	}
 	latexCmd := exec.Command("/texlive/texdir/bin/x86_64-linux/pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-fmt=/preamble", "-output-directory=/tmp", "job.tex")
@@ -38,7 +38,7 @@ func main() {
 		os.Stdout.Write(latexOut)
 		return
 	}
-	gsCmd := exec.Command("/gs", "-q", "-dBATCH", "-dNOPAUSE", "-dSAFER", "-sOutputFile=-", "-dMaxBitmap=10485760", "-dTextAlphaBits=4", "-dGraphicsAlphaBits=4", "-r440", "-sDEVICE=pngalpha", "/tmp/job.pdf")
+	gsCmd := exec.Command("/gs", "-q", "-sstdout=%stderr", "-dBATCH", "-dNOPAUSE", "-dSAFER", "-sOutputFile=-", "-dMaxBitmap=10485760", "-dTextAlphaBits=4", "-dGraphicsAlphaBits=4", "-r440", "-sDEVICE=png16m", "/tmp/job.pdf")
 	if gsOut, err := gsCmd.Output(); err != nil {
 		panic(err)
 	} else {

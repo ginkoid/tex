@@ -10,16 +10,16 @@ docker run --rm --privileged --read-only --tmpfs /tmp --ipc none -p 5000:5000 gh
 ## API
 
 ### Request structure
-| Type   | Offset | Name | Description                    |
-| -------| ------ | ---- | ------------------------------ |
-| uint32 | 0      | len  | Byte length of LaTeX document  |
-| bytes  | 4      | data | LaTeX document of length `len` |
+| Type     | Offset | Name | Description                    |
+| -------- | ------ | ---- | ------------------------------ |
+| uint32le | 0      | len  | Byte length of LaTeX document  |
+| bytes    | 4      | data | LaTeX document of length `len` |
 
 ### Response structure
-| Type   | Offset | Name | Description                      |
-| -------| ------ | ---- | -------------------------------- |
-| uint32 | 0      | code | [Response code](#response-codes) |
-| bytes  | 4      | data | Response content                 |
+| Type     | Offset | Name | Description                      |
+| -------- | ------ | ---- | -------------------------------- |
+| uint32le | 0      | code | [Response code](#response-codes) |
+| bytes    | 4      | data | Response content                 |
 
 ### Response codes
 | Value | Description                            |

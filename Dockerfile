@@ -16,7 +16,7 @@ RUN apt-get update && \
     mkdir install-tl && \
     curl http://dante.ctan.org/tex-archive/systems/texlive/tlnet/install-tl-unx.tar.gz | tar --strip-components 1 -xzoC install-tl && \
     /install-tl/install-tl --profile=texlive.profile --repository=http://dante.ctan.org/tex-archive/systems/texlive/tlnet
-RUN /texlive/texdir/bin/x86_64-linux/tlmgr install chemfig simplekv circuitikz xstring siunitx esint mhchem tikz-cd pgfplots cancel doublestroke units physics rsfs cjhebrew standalone esint-type1
+RUN /texlive/texdir/bin/x86_64-linux/tlmgr install chemfig simplekv circuitikz xstring siunitx esint mhchem chemformula tikz-cd pgfplots cancel doublestroke units physics rsfs cjhebrew standalone esint-type1
 COPY --chmod=744 texmf.cnf /texlive/texdir
 COPY preamble.tex /
 RUN /texlive/texdir/bin/x86_64-linux/pdflatex -ini -output-format=pdf "&latex preamble.tex"
