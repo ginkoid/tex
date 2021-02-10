@@ -4,7 +4,7 @@ Secure LaTeX renderer service for [plusbot](https://github.com/ginkoid/plusbot)
 
 ```sh
 sysctl -w kernel.unprivileged_userns_clone=1 # debian only
-docker run --rm --privileged --read-only --tmpfs /tmp --ipc none -p 5000:5000 ghcr.io/ginkoid/plusbot-latex
+docker-compose up
 ```
 
 ## API

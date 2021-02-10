@@ -5,8 +5,7 @@ FROM debian:10.7-slim AS nsjail
 WORKDIR /app
 RUN apt-get update && \
     apt-get install -y curl autoconf bison flex gcc g++ git libprotobuf-dev libnl-route-3-dev libtool make pkg-config protobuf-compiler && \
-    git clone --depth 1 --branch 3.0 https://github.com/google/nsjail . && \
-    make
+    git clone https://github.com/google/nsjail . && git checkout 645eabd862e4eb20ec70a387fb7d50ecbc613f6e && make
 
 FROM debian:10.7-slim AS latex
 
@@ -40,7 +39,7 @@ FROM debian:10.7-slim
 RUN apt-get update && \
     apt-get install --no-install-recommends -y libprotobuf17 libnl-route-3-200 && \
     rm -rf /var/lib/apt/lists/* && \
-    mkdir /app && \
+    mkdir -p /app/cgroup/cpu,cpuacct /app/cgroup/memory && \
     useradd -M nsjail
 COPY --from=nsjail /app/nsjail /app
 COPY --from=latex /texlive /app/texlive
