@@ -1,26 +1,21 @@
-# syntax=docker/dockerfile:1.2.1
-
-FROM debian:10.7-slim AS nsjail
-
-WORKDIR /app
-RUN apt-get update && \
-    apt-get install -y curl autoconf bison flex gcc g++ git libprotobuf-dev libnl-route-3-dev libtool make pkg-config protobuf-compiler && \
-    git clone https://github.com/google/nsjail . && git checkout 645eabd862e4eb20ec70a387fb7d50ecbc613f6e && make
-
 FROM debian:10.7-slim AS latex
 
-COPY texlive.profile /
+WORKDIR /app
+COPY texlive.profile .
 RUN apt-get update && \
     apt-get install -y curl perl && \
     mkdir install-tl && \
     curl http://dante.ctan.org/tex-archive/systems/texlive/tlnet/install-tl-unx.tar.gz | tar --strip-components 1 -xzoC install-tl && \
-    /install-tl/install-tl --profile=texlive.profile --repository=http://dante.ctan.org/tex-archive/systems/texlive/tlnet
-RUN /texlive/texdir/bin/x86_64-linux/tlmgr install chemfig simplekv circuitikz xstring siunitx esint mhchem chemformula tikz-cd pgfplots cancel doublestroke units physics rsfs cjhebrew standalone esint-type1
-COPY --chmod=744 texmf.cnf /texlive/texdir
-COPY preamble.tex /
-RUN /texlive/texdir/bin/x86_64-linux/pdflatex -ini -output-format=pdf "&latex preamble.tex"
+    ./install-tl/install-tl --profile=texlive.profile --repository=http://dante.ctan.org/tex-archive/systems/texlive/tlnet
+RUN ./texlive/texdir/bin/x86_64-linux/tlmgr install \
+    chemfig simplekv circuitikz xstring siunitx esint mhchem chemformula \
+    tikz-cd pgfplots cancel doublestroke units physics rsfs cjhebrew \
+    standalone esint-type1 pgf-blur tikzlings
+COPY --chmod=744 texmf.cnf ./texlive/texdir
+COPY preamble.tex .
+RUN ./texlive/texdir/bin/x86_64-linux/pdflatex -ini -output-format=pdf "&latex preamble.tex"
 
-FROM debian:10.7-slim AS ghostscript
+FROM debian:10.7-slim AS gs
 
 WORKDIR /app
 RUN apt-get update && \
@@ -28,24 +23,24 @@ RUN apt-get update && \
     curl -L https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9533/ghostscript-9.53.3-linux-x86_64.tgz | tar --strip-components 1 -xzoC . && \
     mv gs-* gs
 
-FROM golang:1.14.13-buster AS job
+FROM golang:1.14.13-buster AS run
 
 WORKDIR /app
-COPY job.go .
-RUN go build -ldflags="-w -s" job.go
+COPY run.go .
+RUN go build -ldflags="-w -s" run.go
 
-FROM debian:10.7-slim
+FROM busybox:1.32.1-glibc AS srv
 
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y libprotobuf17 libnl-route-3-200 && \
-    rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /app/cgroup/cpu,cpuacct /app/cgroup/memory && \
-    useradd -M nsjail
-COPY --from=nsjail /app/nsjail /app
-COPY --from=latex /texlive /app/texlive
-COPY --from=latex /preamble.fmt /app
-COPY --from=ghostscript /app/gs /app
-COPY --from=job /app/job /app
-COPY --chmod=755 nsjail.cfg run.sh /app/
+COPY --from=latex /app/texlive /app/texlive
+COPY --from=latex /app/preamble.fmt /app
+COPY --from=gs /app/gs /app
+COPY --from=run /app/run /app
 
-CMD ["/app/run.sh"]
+FROM redpwn/jail:sha-fb3c4aa0c06ae16713c9139d3907a7cfaaa077ac
+
+COPY --from=srv / /srv
+COPY --chmod=744 hook.sh /jail
+ENV JAIL_TIME 5
+ENV JAIL_PIDS 10
+ENV JAIL_MEM 20971520
+ENV JAIL_CPU 500
