@@ -10,7 +10,7 @@ RUN apt-get update && \
 RUN ./texlive/texdir/bin/x86_64-linux/tlmgr install \
     chemfig simplekv circuitikz xstring siunitx esint mhchem chemformula \
     tikz-cd pgfplots cancel doublestroke units physics rsfs cjhebrew \
-    standalone esint-type1 pgf-blur tikzlings
+    standalone esint-type1 pgf-blur tikzlings tikzducks
 COPY --chmod=744 texmf.cnf ./texlive/texdir
 COPY preamble.tex .
 RUN ./texlive/texdir/bin/x86_64-linux/pdflatex -ini -output-format=pdf "&latex preamble.tex"
