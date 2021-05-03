@@ -29,18 +29,12 @@ WORKDIR /app
 COPY run.go .
 RUN go build -ldflags="-w -s" run.go
 
-FROM busybox:1.32.1-glibc AS srv
-
-COPY --from=latex /app/texlive /app/texlive
-COPY --from=latex /app/preamble.fmt /app
-COPY --from=gs /app/gs /app
-COPY --from=run /app/run /app
-
 FROM redpwn/jail:sha-fb3c4aa0c06ae16713c9139d3907a7cfaaa077ac
 
-COPY --from=srv / /srv
+COPY --from=busybox:1.32.1-glibc / /srv
+COPY --from=latex /app/texlive /srv/app/texlive
+COPY --from=latex /app/preamble.fmt /srv/app
+COPY --from=gs /app/gs /srv/app
+COPY --from=run /app/run /srv/app
 COPY --chmod=744 hook.sh /jail
-ENV JAIL_TIME 5
-ENV JAIL_PIDS 10
-ENV JAIL_MEM 20971520
-ENV JAIL_CPU 500
+ENV JAIL_TIME=5 JAIL_PIDS=10 JAIL_MEM=20971520 JAIL_CPU=500

@@ -7,6 +7,7 @@ mount {
   rw: true
   options: "size=20m"
   nodev: true
+  nosuid: true
   noexec: true
 }
 EOF
