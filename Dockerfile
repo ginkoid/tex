@@ -23,13 +23,13 @@ RUN apt-get update && \
     curl -L https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9533/ghostscript-9.53.3-linux-x86_64.tgz | tar --strip-components 1 -xzoC . && \
     mv gs-* gs
 
-FROM golang:1.14.13-buster AS run
+FROM golang:1.16.3-buster AS run
 
 WORKDIR /app
 COPY run.go .
 RUN go build -ldflags="-w -s" run.go
 
-FROM redpwn/jail:sha-fb3c4aa0c06ae16713c9139d3907a7cfaaa077ac
+FROM redpwn/jail:sha-3799217c407ee45f5d7786fb7bfdec18c9dba695
 
 COPY --from=busybox:1.32.1-glibc / /srv
 COPY --from=latex /app/texlive /srv/app/texlive

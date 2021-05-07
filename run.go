@@ -2,11 +2,10 @@ package main
 
 import (
 	"encoding/binary"
-	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
+	"fmt"
 )
 
 const (
@@ -33,13 +32,13 @@ func writeNum(num uint32) {
 
 func main() {
 	if readNum() != requestRender {
-		panic(errors.New("must use render type"))
+		panic(fmt.Errorf("must use render type"))
 	}
 	tex := make([]byte, readNum())
 	if _, err := io.ReadFull(os.Stdin, tex); err != nil {
 		panic(err)
 	}
-	if err := ioutil.WriteFile("/tmp/job.tex", tex, 0400); err != nil {
+	if err := os.WriteFile("/tmp/job.tex", tex, 0400); err != nil {
 		panic(err)
 	}
 	texCmd := exec.Command(
@@ -57,11 +56,11 @@ func main() {
 		"-sOutputFile=-", "-dMaxBitmap=10485760", "-dTextAlphaBits=4",
 		"-dGraphicsAlphaBits=4", "-r440", "-sDEVICE=png16m", "/tmp/job.pdf",
 	)
-	if gsOut, err := gsCmd.Output(); err != nil {
+	gsOut, err := gsCmd.Output()
+	if err != nil {
 		panic(err)
-	} else {
-		writeNum(responsePng)
-		writeNum(uint32(len(gsOut)))
-		os.Stdout.Write(gsOut)
 	}
+	writeNum(responsePng)
+	writeNum(uint32(len(gsOut)))
+	os.Stdout.Write(gsOut)
 }
