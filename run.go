@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
-	"fmt"
 )
 
 const (
@@ -41,24 +41,17 @@ func main() {
 	if err := os.WriteFile("/tmp/job.tex", tex, 0400); err != nil {
 		panic(err)
 	}
-	texCmd := exec.Command(
-		"./texlive/texdir/bin/x86_64-linux/pdflatex", "-interaction=nonstopmode",
-		"-halt-on-error", "-fmt=preamble", "-output-directory=/tmp", "job.tex",
-	)
+	texCmd := exec.Command("./texlive/texdir/bin/x86_64-linux/pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-fmt=preamble", "-output-directory=/tmp", "job.tex")
 	if texOut, err := texCmd.CombinedOutput(); err != nil {
 		writeNum(responseTexError)
 		writeNum(uint32(len(texOut)))
 		os.Stdout.Write(texOut)
 		return
 	}
-	gsCmd := exec.Command(
-		"./gs", "-q", "-sstdout=%stderr", "-dBATCH", "-dNOPAUSE", "-dSAFER",
-		"-sOutputFile=-", "-dMaxBitmap=10485760", "-dTextAlphaBits=4",
-		"-dGraphicsAlphaBits=4", "-r440", "-sDEVICE=png16m", "/tmp/job.pdf",
-	)
+	gsCmd := exec.Command("./gs", "-q", "-sstdout=%stderr", "-dBATCH", "-dNOPAUSE", "-dSAFER", "-sOutputFile=-", "-dMaxBitmap=10485760", "-dTextAlphaBits=4", "-dGraphicsAlphaBits=4", "-r440", "-sDEVICE=png16m", "/tmp/job.pdf")
 	gsOut, err := gsCmd.Output()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("exec gs: %w", err))
 	}
 	writeNum(responsePng)
 	writeNum(uint32(len(gsOut)))
