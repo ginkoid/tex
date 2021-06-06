@@ -26,7 +26,7 @@ WORKDIR /app
 COPY run.go .
 RUN go build -ldflags="-w -s" run.go
 
-FROM redpwn/jail:sha-e868f60ef7f106b0292f46e18d616a32ffd8b227
+FROM redpwn/jail:sha-5d97b61d4371c29c9a8a3db3405f3c61f495d7ec
 COPY --from=busybox:1.32.1-glibc / /srv
 COPY --from=latex /app/texlive /srv/app/texlive
 COPY --from=latex /app/preamble.fmt /srv/app
