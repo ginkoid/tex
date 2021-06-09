@@ -21,7 +21,7 @@ RUN apt-get update && \
     curl -L https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9540/ghostscript-9.54.0-linux-x86_64.tgz | tar --strip-components 1 -xzoC . && \
     mv gs-* gs
 
-FROM golang:1.16.4-buster AS run
+FROM golang:1.16.5-buster AS run
 WORKDIR /app
 COPY run.go .
 RUN go build -ldflags="-w -s" run.go
