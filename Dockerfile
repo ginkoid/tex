@@ -21,17 +21,17 @@ RUN apt-get update && \
     curl -L https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9540/ghostscript-9.54.0-linux-x86_64.tgz | tar --strip-components 1 -xzoC . && \
     mv gs-* gs
 
-FROM golang:1.16.5-buster AS run
+FROM golang:1.16.6-buster AS run
 WORKDIR /app
 COPY run.go .
 RUN go build -ldflags="-w -s" run.go
 
-FROM redpwn/jail:sha-5d97b61d4371c29c9a8a3db3405f3c61f495d7ec
+FROM redpwn/jail:v0.0.2
 COPY --from=busybox:1.32.1-glibc / /srv
 COPY --from=latex /app/texlive /srv/app/texlive
 COPY --from=latex /app/preamble.fmt /srv/app
 COPY --from=gs /app/gs /srv/app
-COPY --from=gs /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /srv/lib
+COPY --from=gs /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /lib/x86_64-linux-gnu/libgcc_s.so.1 /srv/lib/
 COPY --from=run /app/run /srv/app
 COPY hook.sh /jail
 ENV JAIL_TIME=5 JAIL_PIDS=10 JAIL_MEM=20M JAIL_CPU=800
