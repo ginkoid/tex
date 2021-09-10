@@ -1,8 +1,3 @@
-TEXMFHOME = /app/texlive/texmf
-TEXMFVAR = /app/texlive/texmf-var
-TEXMFCONFIG = /app/texlive/texmf-config
-TEXMFOUTPUT = /app/texlive/texdir/texmf-dist/tex
-
 shell_escape = f
 parse_first_line = f
 openout_any = p
