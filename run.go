@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 )
@@ -16,12 +17,12 @@ const (
 	resTexErr
 )
 
-func readNum() uint32 {
+func readNum() (uint32, error) {
 	b := make([]byte, 4)
 	if _, err := io.ReadFull(os.Stdin, b); err != nil {
-		log.Fatalf("read num: %v", err)
+		return 0, fmt.Errorf("read num: %w", err)
 	}
-	return binary.BigEndian.Uint32(b)
+	return binary.BigEndian.Uint32(b), nil
 }
 
 func writeNum(num uint32) {
@@ -30,30 +31,67 @@ func writeNum(num uint32) {
 	os.Stdout.Write(b)
 }
 
-func main() {
-	if readNum() != reqRender {
-		log.Fatal("must use render type")
+func run() error {
+	req, err := readNum()
+	if err != nil {
+		return err
 	}
-	tex := make([]byte, readNum())
-	if _, err := io.ReadFull(os.Stdin, tex); err != nil {
-		log.Fatalf("read data: %v", err)
+	if req != reqRender {
+		return errors.New("must use render type")
 	}
-	if err := os.WriteFile("/tmp/job.tex", tex, 0400); err != nil {
-		log.Fatalf("write tex: %v", err)
+	texLen, err := readNum()
+	if err != nil {
+		return err
 	}
-	texCmd := exec.Command("./texlive/texdir/bin/x86_64-linux/pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-fmt=preamble", "-output-directory=/tmp", "job.tex")
+	texFile, err := os.Create("/tmp/job.tex")
+	if err != nil {
+		return err
+	}
+	if _, err := io.CopyN(texFile, os.Stdin, int64(texLen)); err != nil {
+		return err
+	}
+	texCmd := exec.Command(
+		"/app/texlive/texdir/bin/x86_64-linux/pdflatex",
+		"-interaction=nonstopmode",
+		"-halt-on-error",
+		"-fmt=preamble",
+		"-output-directory=/tmp",
+		"job.tex",
+	)
 	if texOut, err := texCmd.CombinedOutput(); err != nil {
 		writeNum(resTexErr)
 		writeNum(uint32(len(texOut)))
 		os.Stdout.Write(texOut)
-		return
+		return nil
 	}
-	gsCmd := exec.Command("./gs", "-q", "-sstdout=%stderr", "-dBATCH", "-dNOPAUSE", "-dSAFER", "-sOutputFile=-", "-dMaxBitmap=10485760", "-dTextAlphaBits=4", "-dGraphicsAlphaBits=4", "-r440", "-sDEVICE=png16m", "/tmp/job.pdf")
+	gsCmd := exec.Command(
+		"/app/gs",
+		"-q",
+		"-sstdout=%stderr",
+		"-dBATCH",
+		"-dNOPAUSE",
+		"-dSAFER",
+		"-sOutputFile=-",
+		"-dMaxBitmap=10485760",
+		"-dTextAlphaBits=4",
+		"-dGraphicsAlphaBits=4",
+		"-r440",
+		"-sDEVICE=png16m",
+		"/tmp/job.pdf",
+	)
 	gsOut, err := gsCmd.Output()
 	if err != nil {
-		log.Fatalf("exec gs: %v", err)
+		return fmt.Errorf("exec gs: %w", err)
 	}
 	writeNum(resPng)
 	writeNum(uint32(len(gsOut)))
 	os.Stdout.Write(gsOut)
+	return nil
+}
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
 }
