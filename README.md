@@ -4,29 +4,11 @@ Fast and secure LaTeX renderer service for [plusbot](https://github.com/ginkoid/
 
 ## Protocol
 
-The renderer communicates over TCP using a request-response structure.
-
-### Request structure
-| Type     | Offset | Name | Description                    |
-| -------- | ------ | ---- | ------------------------------ |
-| uint32be | 0      | type | [Request type](#request-types) |
-| uint32be | 4      | len  | Byte length of LaTeX document  |
-| bytes    | 8      | data | LaTeX document of length `len` |
-
-### Response structure
-| Type     | Offset | Name | Description                      |
-| -------- | ------ | ---- | -------------------------------- |
-| uint32be | 0      | type | [Response type](#response-types) |
-| uint32be | 4      | len  | Byte length of response content  |
-| bytes    | 8      | data | Response content of length `len` |
-
-### Request types
-| Value | Description     |
-| ----- | --------------- |
-| 0     | LaTeX rendering |
+The renderer communicates over TCP. After connecting, send a single LaTeX document. The body is followed by a single `uint32be` [response type](#response-type) value.
 
 ### Response types
-| Value | Description                            |
-| ----- | -------------------------------------- |
-| 0     | Success: PNG in `data`                 |
-| 1     | Error from PDFLaTeX: Message in `data` |
+| Value | Description                      |
+| ----- | -------------------------------- |
+| 0     | Success: PNG in body             |
+| 1     | Error from PDFLaTeX: Log in body |
+| 2     | Error from GhostScript           |

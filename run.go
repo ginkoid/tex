@@ -2,67 +2,38 @@ package main
 
 import (
 	"encoding/binary"
-	"errors"
-	"fmt"
-	"io"
 	"os"
 	"os/exec"
 )
 
+type code uint32
+
 const (
-	reqRender = iota
-)
-const (
-	resPng = iota
-	resTexErr
+	codeOk code = iota
+	codeErrTex
+	codeErrGs
 )
 
-func readNum() (uint32, error) {
+func writeCode(n code) {
 	b := make([]byte, 4)
-	if _, err := io.ReadFull(os.Stdin, b); err != nil {
-		return 0, fmt.Errorf("read num: %w", err)
-	}
-	return binary.BigEndian.Uint32(b), nil
-}
-
-func writeNum(num uint32) {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, num)
+	binary.BigEndian.PutUint32(b, uint32(n))
 	os.Stdout.Write(b)
 }
 
-func run() error {
-	req, err := readNum()
-	if err != nil {
-		return err
-	}
-	if req != reqRender {
-		return errors.New("must use render type")
-	}
-	texLen, err := readNum()
-	if err != nil {
-		return err
-	}
-	texFile, err := os.Create("/tmp/job.tex")
-	if err != nil {
-		return err
-	}
-	if _, err := io.CopyN(texFile, os.Stdin, int64(texLen)); err != nil {
-		return err
-	}
+func main() {
 	texCmd := exec.Command(
 		"/app/texlive/texdir/bin/x86_64-linux/pdflatex",
-		"-interaction=nonstopmode",
+		"-interaction=scrollmode",
 		"-halt-on-error",
 		"-fmt=preamble",
 		"-output-directory=/tmp",
-		"job.tex",
+		"-jobname=job",
 	)
+	texCmd.Stdin = os.Stdin
 	if texOut, err := texCmd.CombinedOutput(); err != nil {
-		writeNum(resTexErr)
-		writeNum(uint32(len(texOut)))
 		os.Stdout.Write(texOut)
-		return nil
+		writeCode(codeErrTex)
+		return
 	}
 	gsCmd := exec.Command(
 		"/app/gs",
@@ -79,19 +50,10 @@ func run() error {
 		"-sDEVICE=png16m",
 		"/tmp/job.pdf",
 	)
-	gsOut, err := gsCmd.Output()
-	if err != nil {
-		return fmt.Errorf("exec gs: %w", err)
+	gsCmd.Stdout = os.Stdout
+	if err := gsCmd.Run(); err != nil {
+		writeCode(codeErrGs)
+		return
 	}
-	writeNum(resPng)
-	writeNum(uint32(len(gsOut)))
-	os.Stdout.Write(gsOut)
-	return nil
-}
-
-func main() {
-	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
+	writeCode(codeOk)
 }
