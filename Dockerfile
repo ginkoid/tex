@@ -33,4 +33,4 @@ COPY --from=gs /app/gs-* /srv/app/gs
 COPY --from=latex /app/texlive /srv/app/texlive
 COPY --from=latex /app/preamble.fmt /srv/app
 COPY --from=run /app/run /srv/app
-ENV JAIL_TIME=0 JAIL_PIDS=10 JAIL_MEM=20M JAIL_CPU=800 JAIL_TMP_SIZE=20M
+ENV JAIL_TIME=0 JAIL_PIDS=10 JAIL_MEM=50M JAIL_CPU=800 JAIL_TMP_SIZE=20M
