@@ -2,7 +2,7 @@ FROM debian:bullseye-20220822-slim AS gs
 WORKDIR /app
 RUN apt-get update && \
   apt-get install -y curl && \
-  curl -fL https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9550/ghostscript-9.55.0-linux-x86_64.tgz | tar xzoC . --strip-components 1
+  curl -fL https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs1000/ghostscript-10.0.0-linux-x86_64.tgz | tar xzoC . --strip-components 1
 
 FROM debian:bullseye-20220822-slim AS latex
 WORKDIR /app
@@ -16,7 +16,7 @@ RUN ./texlive/texdir/bin/*-linux/tlmgr install \
   chemfig simplekv circuitikz xstring siunitx esint mhchem chemformula \
   tikz-cd pgfplots cancel doublestroke units physics rsfs cjhebrew \
   standalone esint-type1 pgf-blur tikzlings tikzducks \
-  collection-fontsrecommended booktabs
+  collection-fontsrecommended booktabs amsthm
 COPY texmf.cnf texlive/texdir
 COPY preamble.tex .
 RUN ./texlive/texdir/bin/*-linux/pdflatex -ini -output-format pdf '&latex preamble.tex'
@@ -33,4 +33,4 @@ COPY --from=gs /app/gs-* /srv/app/gs
 COPY --from=latex /app/texlive /srv/app/texlive
 COPY --from=latex /app/preamble.fmt /srv/app
 COPY --from=run /app/run /srv/app
-ENV JAIL_TIME=0 JAIL_PIDS=10 JAIL_MEM=50M JAIL_CPU=800 JAIL_TMP_SIZE=20M
+ENV JAIL_TIME=0 JAIL_PIDS=10 JAIL_MEM=100M JAIL_CPU=800 JAIL_TMP_SIZE=20M
