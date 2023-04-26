@@ -1,0 +1,8 @@
+[package]
+name = "plusbot-latex"
+version = "0.0.0"
+edition = "2021"
+
+[[bin]]
+name = "run"
+path = "main.rs"

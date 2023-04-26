@@ -12,3 +12,4 @@ The renderer communicates over TCP. After connecting, send a single LaTeX docume
 | 0     | Success: PNG in body             |
 | 1     | Error from PDFLaTeX: Log in body |
 | 2     | Error from GhostScript           |
+| 3     | Internal error                   |
