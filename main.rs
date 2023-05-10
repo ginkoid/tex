@@ -5,7 +5,7 @@ use std::process::{Command, Stdio};
 enum Code {
     Ok = 0,
     ErrLatex = 1,
-    ErrGs = 2,
+    ErrMupdf = 2,
     ErrInternal = 3,
 }
 
@@ -34,25 +34,22 @@ fn run() -> io::Result<()> {
         write_code(Code::ErrLatex)?;
         return Ok(());
     }
-    let gs = Command::new("./gs")
+    let mutool = Command::new("./mutool")
         .args([
+            "draw",
+            "-r440",
+            "-crgb",
+            "-Fpng",
             "-q",
-            "-sstdout=%stderr",
-            "-dBATCH",
-            "-dNOPAUSE",
-            "-sOutputFile=-",
-            "-dMaxBitmap=10485760",
-            "-r1760",
-            "-dDownScaleFactor=4",
-            "-sDEVICE=png16m",
+            "-o-",
             "/tmp/job.pdf",
         ])
         .stdout(Stdio::inherit())
         .stderr(Stdio::piped())
         .output()?;
-    if !gs.status.success() {
-        io::stdout().write_all(&gs.stderr)?;
-        write_code(Code::ErrGs)?;
+    if !mutool.status.success() {
+        io::stdout().write_all(&mutool.stderr)?;
+        write_code(Code::ErrMupdf)?;
         return Ok(());
     }
     write_code(Code::Ok)?;

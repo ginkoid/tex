@@ -11,9 +11,9 @@ type](#response-types) value.
 
 ### Response types
 
-| Value | Description            |
-| ----- | ---------------------- |
-| 0     | Success (PNG in body)  |
-| 1     | Error from LaTeX       |
-| 2     | Error from GhostScript |
-| 3     | Internal error         |
+| Value | Description           |
+| ----- | --------------------- |
+| 0     | Success (PNG in body) |
+| 1     | Error from LaTeX      |
+| 2     | Error from MuPDF      |
+| 3     | Internal error        |

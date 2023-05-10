@@ -1,10 +1,11 @@
 # syntax=docker/dockerfile:1.5.2
 
-FROM debian:bullseye-20230411-slim AS gs
+FROM debian:bullseye-20230411-slim AS mupdf
 WORKDIR /app
 RUN apt-get update && apt-get install -y build-essential
-ADD https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10011/ghostscript-10.01.1.tar.gz gs.tar.gz
-RUN mkdir gs && tar xf gs.tar.gz --strip-components 1 -C gs && cd gs && ./configure && make -j$(nproc)
+ADD https://mupdf.com/downloads/archive/mupdf-1.22.0-source.tar.gz mupdf.tar.gz
+RUN mkdir mupdf && tar xf mupdf.tar.gz --strip-components 1 -C mupdf && \
+  cd mupdf && make HAVE_X11=no HAVE_GLUT=no -j$(nproc)
 
 FROM debian:bullseye-20230411-slim AS latex
 WORKDIR /app
@@ -28,7 +29,7 @@ RUN cargo build --release
 
 FROM pwn.red/jail:0.3.1
 COPY --link --from=busybox:1.36.0-glibc / /srv
-COPY --link --from=gs /app/gs/bin/gs /srv/app/
+COPY --link --from=mupdf /app/mupdf/build/release/mutool /srv/app/
 COPY --link --from=latex /usr/lib/*-linux-gnu/libstdc++.so.6 /lib/*-linux-gnu/libgcc_s.so.1 /lib/*-linux-gnu/libdl.so.2 /srv/lib/
 COPY --link --from=latex /app/texlive /srv/app/texlive
 COPY --link --from=latex /app/preamble.fmt /srv/app/
