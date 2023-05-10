@@ -6,3 +6,6 @@ edition = "2021"
 [[bin]]
 name = "run"
 path = "main.rs"
+
+[profile.release]
+strip = true

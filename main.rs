@@ -19,7 +19,6 @@ fn run() -> io::Result<()> {
         "./texlive/texdir/bin/{}-linux/pdflatex",
         std::env::consts::ARCH
     ))
-    .stdin(Stdio::inherit())
     .args([
         "-interaction=scrollmode",
         "-halt-on-error",
@@ -27,6 +26,7 @@ fn run() -> io::Result<()> {
         "-output-directory=/tmp",
         "-jobname=job",
     ])
+    .stdin(Stdio::inherit())
     .output()?;
     if !latex.status.success() {
         io::stdout().write_all(&latex.stdout)?;
@@ -35,7 +35,6 @@ fn run() -> io::Result<()> {
         return Ok(());
     }
     let gs = Command::new("./gs")
-        .stdout(Stdio::inherit())
         .args([
             "-q",
             "-sstdout=%stderr",
@@ -43,14 +42,16 @@ fn run() -> io::Result<()> {
             "-dNOPAUSE",
             "-sOutputFile=-",
             "-dMaxBitmap=10485760",
-            "-dTextAlphaBits=4",
-            "-dGraphicsAlphaBits=4",
-            "-r440",
+            "-r1760",
+            "-dDownScaleFactor=4",
             "-sDEVICE=png16m",
             "/tmp/job.pdf",
         ])
-        .status()?;
-    if !gs.success() {
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::piped())
+        .output()?;
+    if !gs.status.success() {
+        io::stdout().write_all(&gs.stderr)?;
         write_code(Code::ErrGs)?;
         return Ok(());
     }
