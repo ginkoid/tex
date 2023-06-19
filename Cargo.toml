@@ -1,11 +1,19 @@
 [package]
-name = "plusbot-latex"
+name = "tex"
 version = "0.0.0"
 edition = "2021"
 
-[[bin]]
-name = "run"
-path = "main.rs"
-
 [profile.release]
 strip = true
+
+[dependencies]
+anyhow = "1.0.71"
+async-recursion = "1.0.4"
+axum = "0.6.18"
+base64 = "0.21.2"
+futures = "0.3.28"
+hmac = "0.12.1"
+serde = { version = "1.0.164", features = ["derive"] }
+sha2 = "0.10.7"
+thiserror = "1.0.40"
+tokio = { version = "1.28.2", features = ["full"] }

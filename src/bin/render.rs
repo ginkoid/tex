@@ -1,17 +1,11 @@
-use std::io::{self, Write};
-use std::process::{Command, Stdio};
-
-#[derive(Copy, Clone)]
-enum Code {
-    Ok = 0,
-    ErrLatex = 1,
-    ErrMupdf = 2,
-    ErrInternal = 3,
-}
+use std::{
+    io::{self, Write},
+    process::{Command, Stdio},
+};
+use tex::proto::Code;
 
 fn write_code(code: Code) -> io::Result<()> {
-    let bytes = (code as u32).to_be_bytes();
-    io::stdout().write_all(&bytes)
+    io::stdout().write_all(&(code as u32).to_be_bytes())
 }
 
 fn run() -> io::Result<()> {
@@ -31,7 +25,7 @@ fn run() -> io::Result<()> {
     if !latex.status.success() {
         io::stdout().write_all(&latex.stdout)?;
         io::stdout().write_all(&latex.stderr)?;
-        write_code(Code::ErrLatex)?;
+        write_code(Code::ErrTex)?;
         return Ok(());
     }
     let mutool = Command::new("./mutool")

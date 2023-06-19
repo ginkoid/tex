@@ -4,7 +4,7 @@ on:
     branches:
       - main
 jobs:
-  publish:
+  web:
     runs-on: ubuntu-22.04
     steps:
       - uses: docker/setup-buildx-action@v2.5.0
@@ -19,6 +19,24 @@ jobs:
         with:
           push: true
           provenance: false
-          tags: ghcr.io/${{ github.repository }},ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
+          tags: ghcr.io/ginkoid/tex/web,ghcr.io/ginkoid/tex/web:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  render:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: docker/setup-buildx-action@v2.5.0
+        with:
+          driver-opts: image=moby/buildkit
+      - uses: docker/login-action@v2.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: docker/build-push-action@v4.0.0
+        with:
+          push: true
+          provenance: false
+          tags: ghcr.io/ginkoid/tex/render,ghcr.io/ginkoid/tex/render:sha-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

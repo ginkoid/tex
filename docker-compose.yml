@@ -1,0 +1,23 @@
+services:
+  nginx:
+    image: nginx:1.25.1-bookworm
+    restart: always
+    volumes:
+      - ./nginx:/etc/nginx:ro
+      - ./data/nginx:/var/nginx
+    ports:
+      - 80:80
+      - 443:443
+  web:
+    build:
+      dockerfile: Dockerfile.web
+    restart: always
+    environment:
+      RENDER_ENDPOINT: render:5000
+    env_file:
+      - .env
+  render:
+    build:
+      dockerfile: Dockerfile.render
+    restart: always
+    privileged: true

@@ -1,0 +1,18 @@
+# syntax=docker/dockerfile:1.5.2
+
+FROM rust:1.69.0-slim-bullseye AS web
+WORKDIR /app
+COPY Cargo.lock Cargo.toml ./
+COPY src src
+RUN --mount=type=cache,target=/usr/local/cargo/registry --mount=type=cache,target=/app/target \
+  cargo build --locked --release --bin web && \
+  mkdir bin && cp target/release/web bin
+
+FROM busybox:1.36.0-glibc
+ARG TARGETARCH
+WORKDIR /app
+ADD --chmod=755 https://github.com/krallin/tini/releases/download/v0.19.0/tini-${TARGETARCH} tini
+COPY --link --from=web /lib/*-linux-gnu/libgcc_s.so.1 /lib/*-linux-gnu/libdl.so.2 /lib/
+COPY --link --from=web /app/bin/web .
+USER nobody
+CMD ["./tini", "--", "./web"]
