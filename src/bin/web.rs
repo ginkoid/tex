@@ -194,7 +194,7 @@ impl RenderPool {
             return Err(RenderError::Tex(String::from_utf8(buf)?).into());
         }
         if code != Code::Ok as u32 {
-            bail!("invalid response {}", code);
+            bail!("unknown error: {}: {:?}", code, buf);
         }
         Ok(buf.into())
     }
