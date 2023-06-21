@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{bail, Error, Result};
 use async_recursion::async_recursion;
 use axum::{
     body,
@@ -12,8 +12,8 @@ use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
 use hmac::{Hmac, Mac};
 use serde::Deserialize;
 use sha2::Sha256;
-use std::{collections::VecDeque, env, mem::size_of, net::SocketAddr, ops::Deref, sync};
-use tex::proto::Code;
+use std::{collections::VecDeque, env, net::SocketAddr, ops::Deref, sync};
+use tex::proto;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
@@ -171,32 +171,30 @@ impl RenderPool {
 
         self.connect();
         let handle = self.streams.lock().unwrap().pop_front().unwrap();
-        let mut stream = handle.await??;
-        stream.write_all_buf(&mut content.clone()).await?;
-        stream.write_all(b"\n\\end{document}\n").await?;
+        let response = match time::timeout(time::Duration::from_secs(5), async {
+            let mut stream = handle.await??;
+            stream.write_all_buf(&mut content.clone()).await?;
+            stream.write_all(b"\n\\end{document}\n").await?;
 
-        let mut buf = Vec::new();
-        match time::timeout(time::Duration::from_secs(5), stream.read_to_end(&mut buf)).await {
-            Ok(v) => v,
+            let code = stream.read_u32().await?;
+            let mut data = vec![0; stream.read_u32().await? as usize];
+            stream.read_exact(&mut data[..]).await?;
+            Ok::<proto::Response, Error>(proto::Response {
+                code: code.try_into()?,
+                data,
+            })
+        })
+        .await
+        {
+            Ok(Ok(response)) => response,
+            Ok(Err(_)) => return self.do_render(content, tries + 1).await,
             Err(_) => return Err(RenderError::Timeout.into()),
-        }?;
-
-        if buf.len() < size_of::<u32>() {
-            return self.do_render(content, tries + 1).await;
+        };
+        match response.code {
+            proto::Code::Ok => Ok(response.data.into()),
+            proto::Code::ErrTex => Err(RenderError::Tex(String::from_utf8(response.data)?).into()),
+            _ => bail!("internal error: {:?}", response.code),
         }
-        let code = u32::from_be_bytes(
-            buf.split_off(buf.len() - size_of::<u32>())
-                .try_into()
-                .unwrap(),
-        );
-
-        if code == Code::ErrTex as u32 {
-            return Err(RenderError::Tex(String::from_utf8(buf)?).into());
-        }
-        if code != Code::Ok as u32 {
-            bail!("unknown error: {}: {:?}", code, buf);
-        }
-        Ok(buf.into())
     }
 
     async fn render(&self, content: body::Bytes) -> Result<body::Bytes> {

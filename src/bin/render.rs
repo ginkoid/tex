@@ -2,13 +2,20 @@ use std::{
     io::{self, Write},
     process::{Command, Stdio},
 };
-use tex::proto::Code;
+use tex::proto;
 
-fn write_code(code: Code) -> io::Result<()> {
-    io::stdout().write_all(&(code as u32).to_be_bytes())
+pub fn write_response(response: proto::Response) -> io::Result<()> {
+    if response.data.len() > u32::MAX as usize {
+        panic!("response too long")
+    }
+    let mut stdout = std::io::stdout().lock();
+    stdout.write_all(&<u32>::from(response.code).to_be_bytes())?;
+    stdout.write_all(&(response.data.len() as u32).to_be_bytes())?;
+    stdout.write_all(&response.data)?;
+    Ok(())
 }
 
-fn run() -> io::Result<()> {
+fn run() -> io::Result<proto::Response> {
     let latex = Command::new(format!(
         "./texlive/texdir/bin/{}-linux/pdflatex",
         std::env::consts::ARCH
@@ -23,10 +30,12 @@ fn run() -> io::Result<()> {
     .stdin(Stdio::inherit())
     .output()?;
     if !latex.status.success() {
-        io::stdout().write_all(&latex.stdout)?;
-        io::stdout().write_all(&latex.stderr)?;
-        write_code(Code::ErrTex)?;
-        return Ok(());
+        let mut data = latex.stdout;
+        data.extend(&latex.stderr);
+        return Ok(proto::Response {
+            code: proto::Code::ErrTex,
+            data,
+        });
     }
     let mutool = Command::new("./mutool")
         .args([
@@ -38,21 +47,25 @@ fn run() -> io::Result<()> {
             "-o-",
             "/tmp/job.pdf",
         ])
-        .stdout(Stdio::inherit())
+        .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()?;
     if !mutool.status.success() {
-        io::stdout().write_all(&mutool.stderr)?;
-        write_code(Code::ErrMupdf)?;
-        return Ok(());
+        return Ok(proto::Response {
+            code: proto::Code::ErrMupdf,
+            data: mutool.stderr,
+        });
     }
-    write_code(Code::Ok)?;
-    Ok(())
+    Ok(proto::Response {
+        code: proto::Code::Ok,
+        data: mutool.stdout,
+    })
 }
 
 fn main() {
-    run().unwrap_or_else(|e| {
-        eprintln!("{}", e);
-        write_code(Code::ErrInternal).unwrap();
+    let response = run().unwrap_or_else(|e| proto::Response {
+        code: proto::Code::ErrInternal,
+        data: e.to_string().into_bytes(),
     });
+    write_response(response).unwrap();
 }
