@@ -4,7 +4,7 @@ use axum::{
     body,
     extract::{Path, Query, State},
     http::{header, StatusCode},
-    response::{IntoResponse, Response},
+    response::Response,
     routing::get,
     Router,
 };
@@ -74,41 +74,30 @@ async fn render(
     State(app): State<sync::Arc<App>>,
     Path(tex): Path<String>,
     query: Query<RenderQuery>,
-) -> impl IntoResponse {
+) -> Result<Response<body::Full<body::Bytes>>, (StatusCode, String)> {
     let tex = body::Bytes::from(tex);
     let pool = if let Some(token) = &query.token {
         if let Err(_) = verify_hmac(&app.hmac_key, &token, tex.clone()) {
-            return make_response(StatusCode::UNAUTHORIZED, "");
+            return Err((StatusCode::FORBIDDEN, "".to_string()));
         }
         &app.priority_pool
     } else {
         &app.public_pool
     };
     match pool.render(tex).await {
-        Ok(bytes) => Response::builder()
+        Ok(bytes) => Ok(Response::builder()
             .header(header::CONTENT_TYPE, "image/png")
             .body(bytes.into())
-            .unwrap(),
+            .unwrap()),
         Err(err) => match err.downcast::<RenderError>() {
-            Ok(RenderError::Tex(err)) => make_response(StatusCode::BAD_REQUEST, err),
-            Ok(RenderError::Timeout) => make_response(StatusCode::BAD_REQUEST, "timeout"),
+            Ok(RenderError::Tex(err)) => Err((StatusCode::BAD_REQUEST, err)),
+            Ok(RenderError::Timeout) => Err((StatusCode::BAD_REQUEST, "timeout".to_string())),
             Err(err) => {
-                eprintln!("{}", err);
-                make_response(StatusCode::INTERNAL_SERVER_ERROR, "")
+                eprintln!("render: {}", err);
+                Err((StatusCode::INTERNAL_SERVER_ERROR, "".to_string()))
             }
         },
     }
-}
-
-fn make_response(
-    status: StatusCode,
-    content: impl Into<body::Bytes>,
-) -> Response<body::Full<body::Bytes>> {
-    Response::builder()
-        .status(status)
-        .header(header::CONTENT_TYPE, "text/plain")
-        .body(body::Full::from(content.into()))
-        .unwrap()
 }
 
 async fn serve(router: Router, port: u16) {
