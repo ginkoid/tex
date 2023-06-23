@@ -32,7 +32,7 @@ async fn main() {
         .parse::<usize>()
         .unwrap();
     let hmac_key = BASE64_URL_SAFE_NO_PAD
-        .decode(env::var("HMAC_KEY").unwrap())
+        .decode(env::var("HMAC_KEY").unwrap_or("".to_string()))
         .unwrap();
     let app = sync::Arc::new(App {
         priority_pool: RenderPool::new(priority_pool_size, render_endpoint.as_str())

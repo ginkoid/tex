@@ -15,8 +15,6 @@ services:
     restart: always
     environment:
       RENDER_ENDPOINT: render:5000
-    env_file:
-      - .env
   render:
     build:
       dockerfile: Dockerfile.render
