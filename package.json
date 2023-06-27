@@ -3,11 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
+    "@codemirror/commands": "^6.2.4",
+    "@codemirror/language": "^6.8.0",
+    "@codemirror/legacy-modes": "^6.3.2",
+    "@codemirror/state": "^6.2.1",
+    "@codemirror/view": "^6.14.0",
     "codemirror": "^6.0.1",
     "esbuild": "^0.18.6"
   },
   "scripts": {
-    "build": "esbuild client/index.js --bundle --outfile=nginx/build/index.js",
-    "watch": "npm run build -- --watch"
+    "_build": "cp -r client/public nginx && esbuild client/app.js --bundle --outfile=nginx/public/assets/app.js",
+    "start": "npm run _build -- --watch --sourcemap",
+    "build": "npm run _build -- --minify"
   }
 }

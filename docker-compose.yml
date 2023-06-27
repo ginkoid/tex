@@ -1,7 +1,6 @@
 services:
   nginx:
     image: nginx:1.25.1-bookworm
-    restart: always
     volumes:
       - ./nginx:/etc/nginx:ro
       - ./data/nginx:/var/nginx
@@ -12,11 +11,9 @@ services:
   web:
     build:
       dockerfile: Dockerfile.web
-    restart: always
     environment:
       RENDER_ENDPOINT: render:5000
   render:
     build:
       dockerfile: Dockerfile.render
-    restart: always
     privileged: true

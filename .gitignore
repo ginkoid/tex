@@ -2,6 +2,6 @@
 /target
 /data
 /nginx/*.pem
-/nginx/build
+/nginx/public
 /.env
 /node_modules

@@ -24,11 +24,11 @@ use tokio::{
 async fn main() {
     let render_endpoint = env::var("RENDER_ENDPOINT").unwrap_or("localhost:5000".to_string());
     let priority_pool_size = env::var("PRIORITY_POOL_SIZE")
-        .unwrap_or("3".to_string())
+        .unwrap_or("2".to_string())
         .parse::<usize>()
         .unwrap();
     let public_pool_size = env::var("PUBLIC_POOL_SIZE")
-        .unwrap_or("3".to_string())
+        .unwrap_or("2".to_string())
         .parse::<usize>()
         .unwrap();
     let hmac_key = BASE64_URL_SAFE_NO_PAD
