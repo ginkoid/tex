@@ -5,7 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     http::{header, StatusCode},
     response::Response,
-    routing::get,
+    routing::{get, post},
     Router,
 };
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
@@ -46,7 +46,8 @@ async fn main() {
     serve(
         Router::new()
             .route("/health", get(|| async { "ok" }))
-            .route("/render/:tex", get(render))
+            .route("/render", post(render_post))
+            .route("/render/:tex", get(render_get))
             .with_state(app),
         3000,
     )
@@ -70,20 +71,10 @@ fn verify_hmac(hmac_key: &Vec<u8>, token: &String, tex: body::Bytes) -> Result<(
     Ok(hmac.verify_slice(BASE64_URL_SAFE_NO_PAD.decode(token.as_bytes())?.as_slice())?)
 }
 
-async fn render(
-    State(app): State<sync::Arc<App>>,
-    Path(tex): Path<String>,
-    query: Query<RenderQuery>,
+async fn render_response(
+    pool: &RenderPool,
+    tex: body::Bytes,
 ) -> Result<Response<body::Full<body::Bytes>>, (StatusCode, String)> {
-    let tex = body::Bytes::from(tex);
-    let pool = if let Some(token) = &query.token {
-        if let Err(_) = verify_hmac(&app.hmac_key, &token, tex.clone()) {
-            return Err((StatusCode::FORBIDDEN, "".to_string()));
-        }
-        &app.priority_pool
-    } else {
-        &app.public_pool
-    };
     match pool.render(tex).await {
         Ok(bytes) => Ok(Response::builder()
             .header(header::CONTENT_TYPE, "image/png")
@@ -98,6 +89,30 @@ async fn render(
             }
         },
     }
+}
+
+async fn render_post(
+    State(app): State<sync::Arc<App>>,
+    body: body::Bytes,
+) -> Result<Response<body::Full<body::Bytes>>, (StatusCode, String)> {
+    render_response(&app.public_pool, body).await
+}
+
+async fn render_get(
+    State(app): State<sync::Arc<App>>,
+    Path(tex): Path<String>,
+    query: Query<RenderQuery>,
+) -> Result<Response<body::Full<body::Bytes>>, (StatusCode, String)> {
+    let tex = body::Bytes::from(tex);
+    let pool = if let Some(token) = &query.token {
+        if let Err(_) = verify_hmac(&app.hmac_key, &token, tex.clone()) {
+            return Err((StatusCode::FORBIDDEN, "".to_string()));
+        }
+        &app.priority_pool
+    } else {
+        &app.public_pool
+    };
+    render_response(pool, tex).await
 }
 
 async fn serve(router: Router, port: u16) {
