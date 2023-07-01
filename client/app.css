@@ -7,6 +7,14 @@ html, body {
   height: 100%;
 }
 
+#container {
+  width: 100%;
+  max-width: 50rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', 'Helvetica Neue', sans-serif;
+  margin: 0 auto;
+  padding: 0.5rem;
+}
+
 .card {
   border: 0.5px solid #5C5F66;
   padding: 1rem;
@@ -15,20 +23,25 @@ html, body {
   position: relative;
 }
 
-.hidden {
-  display: none !important;
+h2 {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+summary {
+  cursor: pointer;
 }
 
 #editor {
   margin-bottom: 2rem;
 }
 
-#container {
-  width: 100%;
-  max-width: 50rem;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', 'Helvetica Neue', sans-serif;
-  margin: 0 auto;
-  padding: 0.5rem;
+.hidden {
+  display: none !important;
+}
+
+#error {
+  transition: filter 0.1s ease-in-out;
 }
 
 .error {
@@ -52,6 +65,7 @@ html, body {
   margin: 0 auto;
   display: block;
   max-width: 100%;
+  transition: filter 0.1s ease-in-out;
 }
 
 #download {
@@ -59,23 +73,23 @@ html, body {
   bottom: 0.5rem;
   right: 0.5rem;
   opacity: 0;
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity 0.2s ease-in-out, filter 0.1s ease-in-out;
   width: 2rem;
   height: 2rem;
   padding: 0.25rem;
   border-radius: 0.25rem;
   border: 0.5px solid #5C5F66;
+  background: #FFF;
 }
 
 .card:hover #download {
   opacity: 1;
 }
 
-h2 {
-  text-align: center;
-  margin-top: 0.5rem;
+.dirty #download {
+  pointer-events: none;
 }
 
-summary {
-  cursor: pointer;
+.dirty #image, .dirty #download, .dirty #error {
+  filter: opacity(0.5);
 }

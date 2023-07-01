@@ -27,6 +27,7 @@ void (async () => {
   const imageEl = document.getElementById('image')
   const downloadEl = document.getElementById('download')
   const errorEl = document.getElementById('error')
+  const renderEl = document.getElementById('render')
 
   const setError = (error) => {
     const match = error.match(/^\*?!(.*?)^!/ms)
@@ -68,11 +69,14 @@ void (async () => {
         return
       }
       setError(err.message)
+    } finally {
+      renderEl.classList.remove('dirty')
     }
   }
   const debouncedUpdateImage = debounce(200, updateImage)
   const handleInput = (content) => {
     localStorage.content = content
+    renderEl.classList.add('dirty')
     debouncedUpdateImage(content)
   }
 
