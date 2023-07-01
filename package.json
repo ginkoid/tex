@@ -12,7 +12,7 @@
     "esbuild": "^0.18.6"
   },
   "scripts": {
-    "_build": "cp -r client/public nginx && esbuild client/app.js --bundle --outfile=nginx/public/assets/app.js",
+    "_build": "cp -r client/public/ dist && esbuild client/app.js --bundle --loader:.tex=text --outfile=dist/assets/app.js",
     "start": "npm run _build -- --watch --sourcemap",
     "build": "npm run _build -- --minify"
   }

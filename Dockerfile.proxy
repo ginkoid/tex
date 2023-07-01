@@ -1,0 +1,11 @@
+FROM node:20.2.0-bullseye-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci
+COPY client client
+COPY render/preamble.tex render/
+RUN npm run build
+
+FROM nginx:1.25.1-bookworm
+COPY --from=build /app/dist /etc/nginx/public
+COPY proxy /etc/nginx/

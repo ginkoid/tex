@@ -17,7 +17,7 @@ RUN ./install-tl-*/install-tl --profile texlive.profile --repository https://mir
 RUN ./texlive/texdir/bin/*-linux/tlmgr install \
   cancel chemfig chemformula circuitikz cjhebrew collection-fontsrecommended \
   doublestroke esint esint-type1 mhchem pgf-blur pgfplots physics rsfs \
-  simplekv siunitx standalone tikz-cd tikzducks tikzlings units xstring
+  simplekv siunitx standalone tikz-cd tikzducks tikzlings units varwidth xstring
 COPY render/texmf.cnf texlive/texdir
 COPY render/preamble.tex .
 RUN ./texlive/texdir/bin/*-linux/pdflatex -ini -output-format pdf '&latex preamble.tex'

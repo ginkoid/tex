@@ -1,13 +1,11 @@
 services:
-  nginx:
-    image: nginx:1.25.1-bookworm
+  proxy:
+    build:
+      dockerfile: Dockerfile.proxy
     volumes:
-      - ./nginx:/etc/nginx:ro
-      - ./data/nginx:/var/nginx
+      - ./data/proxy:/var/nginx
     ports:
-      - 80:80
-      - 443:443
-      - 443:443/udp
+      - 3000:80
   web:
     build:
       dockerfile: Dockerfile.web

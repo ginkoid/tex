@@ -1,7 +1,6 @@
 .DS_Store
 /target
 /data
-/nginx/*.pem
-/nginx/public
+/dist
 /.env
 /node_modules

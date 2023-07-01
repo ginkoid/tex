@@ -2,14 +2,41 @@
 <html>
     <head>
         <title>TeX Renderer</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="Fast, free, online TeX/LaTeX editor.
-        Securly render and share high quality formulas and graphics from your
+        Securely render and share high quality formulas and graphics from your
         browser.">
-        <script src="/assets/app.js"></script>
+        <link rel="stylesheet" href="/assets/app.css">
     </head>
     <body>
-        <div id="editor"></div>
-        <pre id="error"></pre>
-        <img id="image">
+        <div id="container">
+            <div class="card">
+                <h2>tex.flag.sh</h2>
+                <p>
+                    An editor and web API for TeX. Securely and quickly render
+                    and share high-quality formulas and graphics from your
+                    browser.
+                </p>
+                <p>Get started by typing below.</p>
+                <details>
+                    <summary>Show preamble</summary>
+                    <pre id="preamble" class="code"></pre>
+                </details>
+            </div>
+            <div class="card">
+                <noscript>
+                    <p class="error">JavaScript is required to run this app.</p>
+                </noscript>
+                <div id="editor"></div>
+                <pre id="error" class="error hidden"></pre>
+                <img id="image" class="hidden">
+                <a id="download" class="hidden" download="latex.png">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="1.5" stroke="#212529" fill="none">
+                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2M7 11l5 5l5 -5M12 4l0 12" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+        <script src="/assets/app.js"></script>
     </body>
 </html>

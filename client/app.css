@@ -1,0 +1,81 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+}
+
+.card {
+  border: 0.5px solid #5C5F66;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin: 1rem 0;
+  position: relative;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#editor {
+  margin-bottom: 2rem;
+}
+
+#container {
+  width: 100%;
+  max-width: 50rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', 'Helvetica Neue', sans-serif;
+  margin: 0 auto;
+  padding: 0.5rem;
+}
+
+.error {
+  border: 0.5px solid #FF6B6B;
+  padding: 1rem;
+  background: #FFE3E3;
+  border-radius: 0.25rem;
+  margin-top: 0;
+}
+
+.code {
+  border: 0.5px solid #ADB5BD;
+  padding: 1rem;
+  background: #F1F3F5;
+  border-radius: 0.25rem;
+  margin-top: 0;
+  white-space: pre-wrap;
+}
+
+#image {
+  margin: 0 auto;
+  display: block;
+  max-width: 100%;
+}
+
+#download {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  width: 2rem;
+  height: 2rem;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  border: 0.5px solid #5C5F66;
+}
+
+.card:hover #download {
+  opacity: 1;
+}
+
+h2 {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+summary {
+  cursor: pointer;
+}
