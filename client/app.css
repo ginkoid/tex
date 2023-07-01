@@ -49,7 +49,7 @@ summary {
   padding: 1rem;
   background: #FFE3E3;
   border-radius: 0.25rem;
-  margin-top: 0;
+  margin: 0;
 }
 
 .code {
@@ -57,7 +57,7 @@ summary {
   padding: 1rem;
   background: #F1F3F5;
   border-radius: 0.25rem;
-  margin-top: 0;
+  margin: 0.25rem 0;
   white-space: pre-wrap;
 }
 
