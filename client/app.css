@@ -68,10 +68,16 @@ summary {
   transition: filter 0.1s ease-in-out;
 }
 
-#download {
+#actions {
+  display: flex;
+  gap: 0.5rem;
   position: absolute;
   bottom: 0.5rem;
   right: 0.5rem;
+}
+
+.action {
+  cursor: pointer;
   opacity: 0;
   transition: opacity 0.2s ease-in-out, filter 0.1s ease-in-out;
   width: 2rem;
@@ -82,14 +88,14 @@ summary {
   background: #FFF;
 }
 
-.card:hover #download {
+.card:hover .action {
   opacity: 1;
 }
 
-.dirty #download {
+.dirty .action {
   pointer-events: none;
 }
 
-.dirty #image, .dirty #download, .dirty #error {
+.dirty #image, .dirty .action, .dirty #error {
   filter: opacity(0.5);
 }

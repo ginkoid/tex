@@ -6,6 +6,7 @@ import { indentWithTab } from '@codemirror/commands'
 import './app.css'
 import preamble from '../render/preamble.tex'
 
+const maximumUrlLength = 2000
 const initialValue = String.raw`
 \TeX.flag.sh can render \textbf{text}, \( m \alpha \tau h \), and even pictures:
 \center{\scalebox{0.3}{\begin{tikzpicture} \duck[hat] \end{tikzpicture}}}
@@ -25,7 +26,9 @@ void (async () => {
   }
 
   const imageEl = document.getElementById('image')
+  const actionsEl = document.getElementById('actions')
   const downloadEl = document.getElementById('download')
+  const copyEl = document.getElementById('copy-link')
   const errorEl = document.getElementById('error')
   const renderEl = document.getElementById('render')
 
@@ -36,7 +39,7 @@ void (async () => {
     imageEl.srcset = ''
     imageEl.classList.add('hidden')
     downloadEl.href = ''
-    downloadEl.classList.add('hidden')
+    actionsEl.classList.add('hidden')
   }
 
   let lastAbort
@@ -62,7 +65,7 @@ void (async () => {
         imageEl.srcset = `${lastObjectUrl} 2x`
         imageEl.classList.remove('hidden')
         downloadEl.href = lastObjectUrl
-        downloadEl.classList.remove('hidden')
+        actionsEl.classList.remove('hidden')
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
@@ -74,9 +77,28 @@ void (async () => {
     }
   }
   const debouncedUpdateImage = debounce(200, updateImage)
+
+  let imageUrl
+  const updateLink = (content) => {
+    const url = new URL(`/render/${encodeURIComponent(content)}`, location)
+    if (url.href.length > maximumUrlLength) {
+      imageUrl = undefined
+      copyEl.classList.add('hidden')
+    } else {
+      imageUrl = url.href
+      copyEl.classList.remove('hidden')
+    }
+  }
+  copyEl.addEventListener('click', () => {
+    if (imageUrl) {
+      navigator.clipboard.writeText(imageUrl)
+    }
+  })
+
   const handleInput = (content) => {
     localStorage.content = content
     renderEl.classList.add('dirty')
+    updateLink(content)
     debouncedUpdateImage(content)
   }
 
@@ -95,5 +117,5 @@ void (async () => {
     ],
     parent: document.getElementById('editor'),
   })
-  updateImage(view.state.doc.toString())
+  handleInput(view.state.doc.toString())
 })()
