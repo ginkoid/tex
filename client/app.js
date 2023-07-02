@@ -28,7 +28,7 @@ void (async () => {
   const imageEl = document.getElementById('image')
   const actionsEl = document.getElementById('actions')
   const downloadEl = document.getElementById('download')
-  const copyEl = document.getElementById('copy-link')
+  const copyEl = document.getElementById('copy')
   const errorEl = document.getElementById('error')
   const renderEl = document.getElementById('render')
 
