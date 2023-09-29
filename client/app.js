@@ -1,8 +1,5 @@
-import { basicSetup, EditorView } from 'codemirror'
-import { StreamLanguage } from '@codemirror/language'
-import { stex } from '@codemirror/legacy-modes/mode/stex'
-import { keymap } from '@codemirror/view'
-import { indentWithTab } from '@codemirror/commands'
+import { EditorView } from 'codemirror'
+import extensions from './codemirror'
 import './app.css'
 import preamble from '../render/preamble.tex'
 
@@ -105,10 +102,7 @@ void (async () => {
   const view = new EditorView({
     doc: localStorage.content || initialValue,
     extensions: [
-      basicSetup,
-      EditorView.lineWrapping,
-      keymap.of([indentWithTab]),
-      StreamLanguage.define(stex),
+      extensions,
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           handleInput(update.state.doc.toString())
