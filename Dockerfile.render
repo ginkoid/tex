@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1.6.0
 
-FROM debian:bookworm-20230919-slim AS mupdf
+FROM debian:bookworm-20240408-slim AS mupdf
 WORKDIR /app
 RUN apt-get update && apt-get install -y build-essential
-ADD https://mupdf.com/downloads/archive/mupdf-1.23.3-source.tar.gz mupdf.tar.gz
+ADD https://mupdf.com/downloads/archive/mupdf-1.24.1-source.tar.gz mupdf.tar.gz
 RUN mkdir mupdf && tar xf mupdf.tar.gz --strip-components 1 -C mupdf && \
   cd mupdf && make HAVE_X11=no HAVE_GLUT=no -j$(nproc)
 
-FROM debian:bookworm-20230919-slim AS latex
+FROM debian:bookworm-20240408-slim AS latex
 WORKDIR /app
 RUN apt-get update && apt-get install -y perl curl
 ADD https://mirrors.rit.edu/CTAN/systems/texlive/tlnet/install-tl-unx.tar.gz install-tl.tar.gz
@@ -22,13 +22,12 @@ COPY render/texmf.cnf texlive/texdir
 COPY render/preamble.tex .
 RUN ./texlive/texdir/bin/*-linux/pdflatex -ini -output-format pdf '&latex preamble.tex'
 
-FROM rust:1.72.1-slim-bookworm AS render
+FROM rust:1.77.2-slim-bookworm AS render
 WORKDIR /app
 COPY Cargo.lock Cargo.toml ./
 COPY src src
 RUN --mount=type=cache,sharing=private,target=/usr/local/cargo/registry --mount=type=cache,target=/app/target \
-  cargo build --locked --release --bin render && \
-  mkdir bin && cp target/release/render bin
+  cargo build --locked --release --bin render && mkdir bin && cp target/release/render bin
 
 FROM pwn.red/jail:0.4.1
 COPY --link --from=busybox:1.36.1-glibc / /srv

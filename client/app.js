@@ -1,26 +1,24 @@
 import { EditorView } from 'codemirror'
 import extensions from './codemirror'
-import './app.css'
 import preamble from '../render/preamble.tex'
+import './app.css'
 
-const maximumUrlLength = 2000
+const maxUrlLength = 2000
 const initialValue = String.raw`
 \TeX.flag.sh can render \textbf{text}, \( m \alpha \tau h \), and even pictures:
 \center{\scalebox{0.3}{\begin{tikzpicture} \duck[hat] \end{tikzpicture}}}
 `.trimStart()
 
-void (async () => {
-  await new Promise(resolve => addEventListener('DOMContentLoaded', resolve))
-
-  document.getElementById('preamble').textContent = preamble
-
-  const debounce = (time, cb) => {
-    let timeout
-    return (...args) => {
-      clearTimeout(timeout)
-      timeout = setTimeout(() => cb(...args), time)
-    }
+const debounce = (time, cb) => {
+  let timeout
+  return (...args) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => cb(...args), time)
   }
+}
+
+addEventListener('DOMContentLoaded', () => {
+  document.getElementById('preamble').textContent = preamble
 
   const imageEl = document.getElementById('image')
   const actionsEl = document.getElementById('actions')
@@ -78,7 +76,7 @@ void (async () => {
   let imageUrl
   const updateLink = (content) => {
     const url = new URL(`/render/${encodeURIComponent(content)}`, location)
-    if (url.href.length > maximumUrlLength) {
+    if (url.href.length > maxUrlLength) {
       imageUrl = undefined
       copyEl.classList.add('hidden')
     } else {
@@ -112,4 +110,4 @@ void (async () => {
     parent: document.getElementById('editor'),
   })
   handleInput(view.state.doc.toString())
-})()
+})

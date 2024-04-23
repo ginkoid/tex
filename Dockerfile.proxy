@@ -1,4 +1,4 @@
-FROM node:20.7.0-bookworm-slim AS build
+FROM node:21.7.3-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci
@@ -6,6 +6,6 @@ COPY client client
 COPY render/preamble.tex render/
 RUN npm run build
 
-FROM nginx:1.25.2-bookworm
+FROM nginx:1.25.5-bookworm
 COPY --from=build /app/dist /etc/nginx/public
 COPY proxy /etc/nginx/

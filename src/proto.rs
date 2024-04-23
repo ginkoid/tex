@@ -1,4 +1,4 @@
-use anyhow::{bail, Result, Error};
+use anyhow::{bail, Error, Result};
 
 #[derive(Copy, Clone, Debug)]
 pub enum Code {
