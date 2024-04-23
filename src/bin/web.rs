@@ -2,17 +2,13 @@ use anyhow::{bail, Error, Result};
 use async_recursion::async_recursion;
 use axum::{
     body,
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::{header, StatusCode},
-    response::Response,
+    response::{IntoResponse, Response},
     routing::{get, post},
     Router,
 };
-use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
-use hmac::{Hmac, Mac};
-use serde::Deserialize;
-use sha2::Sha256;
-use std::{collections::VecDeque, env, net::SocketAddr, ops::Deref, sync};
+use std::{collections::VecDeque, env, sync};
 use tex::proto;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -23,62 +19,36 @@ use tokio::{
 #[tokio::main]
 async fn main() {
     let render_endpoint = env::var("RENDER_ENDPOINT").unwrap_or("localhost:5000".to_string());
-    let priority_pool_size = env::var("PRIORITY_POOL_SIZE")
+    let pool_size = env::var("POOL_SIZE")
         .unwrap_or("2".to_string())
         .parse::<usize>()
-        .unwrap();
-    let public_pool_size = env::var("PUBLIC_POOL_SIZE")
-        .unwrap_or("2".to_string())
-        .parse::<usize>()
-        .unwrap();
-    let hmac_key = BASE64_URL_SAFE_NO_PAD
-        .decode(env::var("HMAC_KEY").unwrap_or("".to_string()))
         .unwrap();
     let app = sync::Arc::new(App {
-        priority_pool: RenderPool::new(priority_pool_size, render_endpoint.as_str())
+        pool: RenderPool::new(pool_size, render_endpoint.as_str())
             .await
             .unwrap(),
-        public_pool: RenderPool::new(public_pool_size, render_endpoint.as_str())
-            .await
-            .unwrap(),
-        hmac_key,
     });
-    serve(
-        Router::new()
-            .route("/health", get(|| async { "ok" }))
-            .route("/render", post(render_post))
-            .route("/render/:tex", get(render_get))
-            .with_state(app),
-        3000,
-    )
-    .await
+    let router = Router::new()
+        .route("/health", get(|| async { "ok" }))
+        .route("/render", post(render_post))
+        .route("/render/:tex", get(render_get))
+        .with_state(app);
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, router).await.unwrap();
 }
 
 struct App {
-    priority_pool: RenderPool,
-    public_pool: RenderPool,
-    hmac_key: Vec<u8>,
-}
-
-#[derive(Deserialize)]
-struct RenderQuery {
-    token: Option<String>,
-}
-
-fn verify_hmac(hmac_key: &Vec<u8>, token: &String, tex: body::Bytes) -> Result<()> {
-    let mut hmac = Hmac::<Sha256>::new_from_slice(hmac_key.as_slice())?;
-    hmac.update(tex.deref());
-    Ok(hmac.verify_slice(BASE64_URL_SAFE_NO_PAD.decode(token.as_bytes())?.as_slice())?)
+    pool: RenderPool,
 }
 
 async fn render_response(
     pool: &RenderPool,
     tex: body::Bytes,
-) -> Result<Response<body::Full<body::Bytes>>, (StatusCode, String)> {
+) -> Result<impl IntoResponse, (StatusCode, String)> {
     match pool.render(tex).await {
         Ok(bytes) => Ok(Response::builder()
             .header(header::CONTENT_TYPE, "image/png")
-            .body(bytes.into())
+            .body::<body::Body>(bytes.into())
             .unwrap()),
         Err(err) => match err.downcast::<RenderError>() {
             Ok(RenderError::Tex(err)) => Err((StatusCode::BAD_REQUEST, err)),
@@ -94,34 +64,15 @@ async fn render_response(
 async fn render_post(
     State(app): State<sync::Arc<App>>,
     body: body::Bytes,
-) -> Result<Response<body::Full<body::Bytes>>, (StatusCode, String)> {
-    render_response(&app.public_pool, body).await
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    render_response(&app.pool, body).await
 }
 
 async fn render_get(
     State(app): State<sync::Arc<App>>,
     Path(tex): Path<String>,
-    query: Query<RenderQuery>,
-) -> Result<Response<body::Full<body::Bytes>>, (StatusCode, String)> {
-    let tex = body::Bytes::from(tex);
-    let pool = if let Some(token) = &query.token {
-        if let Err(_) = verify_hmac(&app.hmac_key, &token, tex.clone()) {
-            return Err((StatusCode::FORBIDDEN, "".to_string()));
-        }
-        &app.priority_pool
-    } else {
-        &app.public_pool
-    };
-    render_response(pool, tex).await
-}
-
-async fn serve(router: Router, port: u16) {
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    println!("listening {}", addr);
-    axum::Server::bind(&addr)
-        .serve(router.into_make_service())
-        .await
-        .unwrap();
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    render_response(&app.pool, body::Bytes::from(tex)).await
 }
 
 #[derive(thiserror::Error, Debug)]
