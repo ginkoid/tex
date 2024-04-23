@@ -90,24 +90,28 @@ addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  const handleInput = (content) => {
+  const handleInput = (immediate, content) => {
     localStorage.content = content
     renderEl.classList.add('dirty')
     updateLink(content)
-    debouncedUpdateImage(content)
+    if (immediate) {
+      updateImage(content)
+    } else {
+      debouncedUpdateImage(content)
+    }
   }
-
-  const view = new EditorView({
-    doc: localStorage.content || initialValue,
+  const value = localStorage.content || initialValue
+  handleInput(true, value)
+  new EditorView({
+    doc: value,
     extensions: [
       extensions,
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
-          handleInput(update.state.doc.toString())
+          handleInput(false, update.state.doc.toString())
         }
       }),
     ],
     parent: document.getElementById('editor'),
   })
-  handleInput(view.state.doc.toString())
 })
