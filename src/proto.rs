@@ -16,13 +16,13 @@ impl From<Code> for u32 {
 
 impl TryFrom<u32> for Code {
     type Error = Error;
-    fn try_from(n: u32) -> Result<Self> {
+    fn try_from(n: u32) -> Result<Self, Self::Error> {
         Ok(match n {
             0 => Self::Ok,
             1 => Self::ErrTex,
             2 => Self::ErrMupdf,
             3 => Self::ErrInternal,
-            _ => bail!("invalid code"),
+            _ => bail!("invalid code: {}", n),
         })
     }
 }
